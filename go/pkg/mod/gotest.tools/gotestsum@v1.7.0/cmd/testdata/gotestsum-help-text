@@ -1,0 +1,34 @@
+Usage:
+    gotestsum [flags] [--] [go test flags]
+    gotestsum [command]
+
+Flags:
+      --debug                                       enabled debug logging
+  -f, --format string                               print format of test input (default "short")
+      --hide-summary summary                        hide sections of the summary: skipped,failed,errors,output (default none)
+      --jsonfile string                             write all TestEvents to file
+      --junitfile string                            write a JUnit XML file
+      --junitfile-testcase-classname field-format   format the testcase classname field as: full, relative, short (default full)
+      --junitfile-testsuite-name field-format       format the testsuite name field as: full, relative, short (default full)
+      --max-fails int                               end the test run after this number of failures
+      --no-color                                    disable color output (default true)
+      --packages list                               space separated list of package to test
+      --post-run-command command                    command to run after the tests have completed
+      --raw-command                                 don't prepend 'go test -json' to the 'go test' command
+      --rerun-fails int[=2]                         rerun failed tests until they all pass, or attempts exceeds maximum. Defaults to max 2 reruns when enabled.
+      --rerun-fails-max-failures int                do not rerun any tests if the initial run has more than this number of failures (default 10)
+      --rerun-fails-report string                   write a report to the file, of the tests that were rerun
+      --version                                     show version and exit
+      --watch                                       watch go files, and run tests when a file is modified
+
+Formats:
+    dots                    print a character for each test
+    dots-v2                 experimental dots format, one package per line
+    pkgname                 print a line for each package
+    pkgname-and-test-fails  print a line for each package and failed test output
+    testname                print a line for each test and package
+    standard-quiet          standard go test format
+    standard-verbose        standard go test -v format
+
+Commands:
+    tool                    tools for working with test2json output

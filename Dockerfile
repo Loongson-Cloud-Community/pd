@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine as builder
+FROM cr.loongnix.cn/library/golang:1.19-alpine as builder
 
 RUN apk add --no-cache \
     make \
@@ -6,12 +6,9 @@ RUN apk add --no-cache \
     bash \
     curl \
     gcc \
-    g++
+    g++ \
+    jq
 
-# Install jq for pd-ctl
-RUN cd / && \
-    wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -O jq && \
-    chmod +x jq
 
 RUN mkdir -p /go/src/github.com/tikv/pd
 WORKDIR /go/src/github.com/tikv/pd
@@ -19,19 +16,19 @@ WORKDIR /go/src/github.com/tikv/pd
 # Cache dependencies
 COPY go.mod .
 COPY go.sum .
-
-RUN GO111MODULE=on go mod download
+COPY go /go
 
 COPY . .
+RUN rm -rf go
 
 RUN make
 
-FROM alpine:3.5
+FROM cr.loongnix.cn/library/alpine:3.11.11
 
 COPY --from=builder /go/src/github.com/tikv/pd/bin/pd-server /pd-server
 COPY --from=builder /go/src/github.com/tikv/pd/bin/pd-ctl /pd-ctl
 COPY --from=builder /go/src/github.com/tikv/pd/bin/pd-recover /pd-recover
-COPY --from=builder /jq /usr/local/bin/jq
+COPY --from=builder /usr/bin/jq /usr/local/bin/jq
 
 EXPOSE 2379 2380
 

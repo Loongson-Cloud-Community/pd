@@ -1,0 +1,23 @@
+run:
+  deadline: 5m
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - funlen
+
+linters:
+  enable-all: true
+  disable:
+    - dupl
+    - errcheck
+    - gochecknoglobals
+    - gocognit
+    - goerr113
+    - gomnd
+    - lll
+    - nestif
+    - testpackage
+    - unparam
+    - wsl

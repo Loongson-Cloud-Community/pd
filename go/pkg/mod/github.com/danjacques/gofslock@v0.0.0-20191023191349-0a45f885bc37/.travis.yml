@@ -1,0 +1,22 @@
+# Copyright 2017 by Dan Jacques. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+language: go
+os:
+  - linux
+  - osx
+
+go:
+  - "1.9"
+  - "1.10"
+  - "1.11"
+  - "1.12"
+  - "1.13"
+  - tip
+
+install:
+  - go get -t ./...
+
+script:
+  - go test -v ./...

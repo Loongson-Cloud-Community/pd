@@ -1,0 +1,145 @@
+version: 2.1
+
+orbs:
+  go: gotest/tools@0.0.13
+
+workflows:
+  ci:
+    jobs:
+      - go/test:
+          name: test-go-1.13
+          gotestsum-format: short-verbose
+          executor:
+            name: go/golang
+            tag: 1.13-alpine
+
+      - go/test:
+          name: test-go-1.14
+          gotestsum-format: short-verbose
+          executor:
+            name: go/golang
+            tag: 1.14-alpine
+
+      - go/test:
+          name: test-go-1.15
+          gotestsum-format: short-verbose
+          executor:
+            name: go/golang
+            tag: 1.15-alpine
+
+      - go/test:
+          name: test-go-1.16
+          gotestsum-format: short-verbose
+          executor:
+            name: go/golang
+            tag: 1.16-alpine
+
+      - go/test:
+          name: test-windows
+          executor: windows
+          pre-steps:
+            - run: |
+                git config --global core.autocrlf false
+                git config --global core.symlinks true
+            - run: |
+                choco upgrade golang
+                echo 'export PATH="$PATH:/c/Program Files/Go/bin"' > $BASH_ENV
+            - run: go version
+
+      - go/lint:
+          golangci-lint-version: 1.24.0
+
+      - build
+      - run
+
+      - update-windows-golden:
+          filters:
+            branches: {ignore: '/.*/'}
+
+      - build:
+          name: release
+          publish: true
+          filters:
+            tags: {only: '/v[0-9]+(\.[0-9]+)*/'}
+            branches: {ignore: '/.*/'}
+
+executors:
+  windows:
+    machine:
+      image: windows-server-2019-vs2019:stable
+      resource_class: windows.medium
+      shell: bash.exe
+
+commands:
+  install-goreleaser:
+    description: Install goreleaser
+    steps:
+      - run:
+          name: Install goreleaser
+          command: |
+            command -v goreleaser && exit
+            wget -O- -q https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
+
+jobs:
+
+  build:
+    parameters:
+      publish:
+        type: boolean
+        default: false
+    executor:
+      name: go/golang
+      tag: 1.16-alpine
+    steps:
+      - go/install: {package: git}
+      - go/install-ssh
+      - checkout
+      - go/mod-download
+      - go/mod-tidy-check
+      - install-goreleaser
+      - unless:
+          condition: << parameters.publish >>
+          steps:
+            run:
+              name: build binaries
+              command: bin/goreleaser --rm-dist --snapshot
+      - when:
+          condition: << parameters.publish >>
+          steps:
+            run:
+              name: build and publish binaries
+              command: bin/goreleaser --rm-dist --skip-validate
+      - store_artifacts:
+          path: ./dist
+          destination: dist
+
+  run:
+    executor: go/golang
+    steps:
+      - go/install: {package: git}
+      - go/install-ssh
+      - checkout
+      - go/mod-download
+      - run: |
+          mkdir -p dist
+          go build -o dist/gotestsum .
+      - run: dist/gotestsum
+
+  update-windows-golden:
+    executor: windows
+    steps:
+      - checkout
+      - go/install-gotestsum
+      - run: |
+          git config --global core.autocrlf false
+          git config --global core.symlinks true
+      - run: |
+          choco upgrade golang
+          go version
+
+      - run: |
+          /go/bin/gotestsum ./testjson ./internal/junitxml -test.update-golden
+
+      - store_artifacts:
+          path: testjson/testdata/
+          destination: golden
